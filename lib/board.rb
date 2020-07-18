@@ -83,8 +83,3 @@ class Board
 end
 
 test = Board.new
-
-until 1 == 2
-    test.human_move
-    test.display
-end

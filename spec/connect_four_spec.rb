@@ -5,12 +5,12 @@ describe Board do
 
     it "produces a board with seven columns" do
         test = Board.new
-        expect(test.spaces.length).to eql(7)
+        expect(test.positions.length).to eql(7)
     end
 
     it "produces a board with seven rows" do
         test = Board.new
-        expect(test.spaces[1].length).to eql(6)
+        expect(test.positions[1].length).to eql(6)
     end
 
     describe "#place_piece" do
