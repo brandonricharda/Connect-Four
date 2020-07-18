@@ -6,8 +6,8 @@ class Board
         @positions = {}
         @player = "X"
         @computer = "O"
-        (0..6).to_a.each do |row|
-            positions[row] = Array.new(6, nil)
+        (0..6).to_a.each do |column|
+            positions[column] = Array.new(6, nil)
         end
     end
 
@@ -35,28 +35,28 @@ class Board
     end
 
     def computer_move
-        col = nil
-        until place_piece(col, @computer)
-            col = rand(0..6)
+        column = nil
+        until place_piece(column, @computer)
+            column = rand(0..6)
         end
-        col
+        column
     end
 
     def human_move
         p "Choose a column (0-6)."
-        col = gets.chomp
-        until col.match?(/^[0-9]/) && place_piece(col.to_i, @player)
+        column = gets.chomp
+        until column.match?(/^[0-9]/) && place_piece(column.to_i, @player)
             p "Please enter a number between 0 and 6 to represent a column that is not full."
-            col = gets.chomp
+            column = gets.chomp
         end
-        col.to_i
+        column.to_i
     end
 
     def full?
         moves = []
-        @positions.each do |key, value|
-            value.each do |col|
-                moves << col
+        @positions.each do |key, column|
+            column.each do |row|
+                moves << row
             end
         end
         moves.all? { |value| value }
@@ -68,8 +68,8 @@ class Board
             interface[row] = Array.new
         end
 
-        @positions.each do |key, col|
-            col.each_with_index do |row, index|
+        @positions.each do |key, column|
+            column.each_with_index do |row, index|
                 interface[index] << row
             end
         end
