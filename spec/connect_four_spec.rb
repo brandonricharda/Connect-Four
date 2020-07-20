@@ -5,12 +5,12 @@ describe Board do
 
     it "produces a board with seven columns" do
         test = Board.new
-        expect(test.positions.length).to eql(7)
+        expect(test.columns.length).to eql(7)
     end
 
     it "produces a board with seven rows" do
         test = Board.new
-        expect(test.positions[1].length).to eql(6)
+        expect(test.columns[1].length).to eql(6)
     end
 
     describe "#place_piece" do
@@ -61,6 +61,21 @@ describe Board do
             test = Board.new
             41.times { test.computer_move }
             expect(test.full?).to eql(false)
+        end
+
+        describe "#winner?" do
+            it "identifies when someone has won column-wise" do
+                test = Board.new
+                4.times { test.place_piece(0, test.player) }
+                expect(test.winner?).to eql(test.player)
+            end
+
+            it "identifies when someone has won row-wise" do
+                test = Board.new
+                0.upto(4) { |num| test.place_piece(num, test.player) }
+                expect(test.winner?).to eql(test.player)
+            end
+
         end
     end
 

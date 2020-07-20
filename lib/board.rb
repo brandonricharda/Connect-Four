@@ -1,35 +1,43 @@
 class Board 
 
-    attr_accessor :positions, :player, :computer
+    attr_accessor :columns, :player, :computer, :rows
 
     def initialize
-        @positions = {}
+        @columns = {}
+        @rows = {}
         @player = "X"
         @computer = "O"
+
         (0..6).to_a.each do |column|
-            positions[column] = Array.new(6, nil)
+            @columns[column] = Array.new(6, nil)
         end
+
+        (0..5).to_a.each do |row|
+            @rows[row] = Array.new(5, nil)
+        end
+
     end
 
     def place_piece(column, symbol)
-        return if !column || !(0..6).include?(column)
-        cell = nil
+        return if !column || !(0..6).to_a.include?(column)
+        avail_spot = nil
         #identifies whether the column is full
-        full = @positions[column][0]
+        full = @columns[column][0]
         #finds the last non-nil row in the chosen column (array), then adds the player's piece on top of it
-        @positions[column].each_with_index do |row, index|
-            break if cell || full
+        @columns[column].each_with_index do |row, index|
+            break if avail_spot || full
             if row
-                cell = (index - 1)
-            elsif index == @positions[column].length - 1
-                cell = index
+                avail_spot = (index - 1)
+            elsif index == @columns[column].length - 1
+                avail_spot = index
             end
         end
 
-        if cell
-            @positions[column][cell] = symbol
-            #returns the index at which the new piece has been added
-            @positions[column].index(symbol)            
+        if avail_spot
+            @columns[column][avail_spot] = symbol
+            @rows[avail_spot][column] = symbol
+            #returns the column index at which the new piece has been added
+            @columns[column].index(symbol)            
         end
 
     end
@@ -54,30 +62,36 @@ class Board
 
     def full?
         moves = []
-        @positions.each do |key, column|
-            column.each do |row|
-                moves << row
+        @columns.each do |key, column|
+            column.each do |cell|
+                moves << cell
             end
         end
         moves.all? { |value| value }
     end
 
     def display
-        interface = {}
-        (0..5).to_a.each do |row|
-            interface[row] = Array.new
-        end
-
-        @positions.each do |key, column|
-            column.each_with_index do |row, index|
-                interface[index] << row
-            end
-        end
-
-        interface.each do |key, row|
+        @rows.values.each do |row|
             p row
         end
+    end
 
+    def winner?
+        results = []
+        results << check_moves(@columns)
+        results << check_moves(@rows)
+        return false if results.none? { |result| result }
+        results.select { |result| result }.first
+    end
+
+    def check_moves(hash)
+        result = false
+        hash.each do |key, value|
+            if value.count(@player) >= 4 || value.count(@computer) >= 4
+                result = value.count(@player) > value.count(@computer) ? @player : @computer
+            end
+        end
+        result
     end
 
 end
