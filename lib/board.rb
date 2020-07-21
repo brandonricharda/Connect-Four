@@ -76,22 +76,46 @@ class Board
         end
     end
 
-    def winner?
-        results = []
-        results << check_moves(@columns)
-        results << check_moves(@rows)
-        return false if results.none? { |result| result }
-        results.select { |result| result }.first
-    end
-
-    def check_moves(hash)
-        result = false
-        hash.each do |key, value|
-            if value.count(@player) >= 4 || value.count(@computer) >= 4
-                result = value.count(@player) > value.count(@computer) ? @player : @computer
+    def collect_moves(symbol)
+        coordinates = []
+        @rows.each do |key, value|
+            value.each_with_index do |piece, index|
+                coordinates << [key, index] if piece == symbol
             end
         end
+        coordinates
+    end
+
+    def analyze_moves(moves)
+        rows = []
+        cols = []
+        result = false
+
+        def all_equal?(arr)
+            arr.uniq.length == 1
+        end
+
+        def four_apart?(arr)
+            (arr[3] - arr[0]).abs == 3
+        end
+
+        moves.each do |coordinates|
+            rows << coordinates[0]
+            cols << coordinates[1]
+        end
+
+        if all_equal?(rows) || all_equal?(cols)
+            result = true if four_apart?(rows) || four_apart?(cols)
+        elsif four_apart?(rows) && four_apart?(cols)
+            result = true
+        end
+
         result
+
+    end
+
+    def winner?
+        analyze_moves(collect_moves(@player))
     end
 
 end

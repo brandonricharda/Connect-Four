@@ -67,13 +67,25 @@ describe Board do
             it "identifies when someone has won column-wise" do
                 test = Board.new
                 4.times { test.place_piece(0, test.player) }
-                expect(test.winner?).to eql(test.player)
+                expect(test.winner?).to eql(true)
             end
 
             it "identifies when someone has won row-wise" do
                 test = Board.new
                 0.upto(4) { |num| test.place_piece(num, test.player) }
-                expect(test.winner?).to eql(test.player)
+                expect(test.winner?).to eql(true)
+            end
+
+            it "identifies when someone has won diagonally" do
+                test = Board.new
+                test.place_piece(0, test.player)
+                test.place_piece(1, test.computer)
+                test.place_piece(1, test.player)
+                2.times { test.place_piece(2, test.computer) }
+                test.place_piece(2, test.player)
+                3.times { test.place_piece(3, test.computer) }
+                test.place_piece(3, test.player)
+                expect(test.winner?).to eql(true)
             end
 
         end
