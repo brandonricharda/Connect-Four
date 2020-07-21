@@ -115,7 +115,7 @@ class Board
     end
 
     def winner?
-        analyze_moves(collect_moves(@player))
+        result = analyze_moves(collect_moves(@player)) || analyze_moves(collect_moves(@computer)) ? true : false
     end
 
 end
