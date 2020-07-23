@@ -1,103 +1,164 @@
 require "./lib/board.rb"
+require "./lib/player.rb"
 require "./lib/game.rb"
 
 describe Board do
 
-    it "produces a board with seven columns" do
-        test = Board.new
-        expect(test.columns.length).to eql(7)
+    before do
+        @board = Board.new
     end
 
-    it "produces a board with seven rows" do
-        test = Board.new
-        expect(test.columns[1].length).to eql(6)
+    it "produces a board with seven columns" do
+        expect(@board.columns.length).to eql(7)
+    end
+
+    it "produces a board with six rows" do
+        expect(@board.rows.length).to eql(6)
+    end
+
+    describe "#available_spot" do
+
+        it "finds the available spot in a given column" do
+            expect(@board.available_spot(0)).to eql(5)
+        end
+
     end
 
     describe "#place_piece" do
-        it "adds a piece to the last available row of a given column" do
-            test = Board.new
-            expect(test.place_piece(1, test.player)).to eql(5)
-            expect(test.place_piece(1, test.player)).to eql(4)
-            expect(test.place_piece(1, test.player)).to eql(3)
-            expect(test.place_piece(1, test.player)).to eql(2)
-            expect(test.place_piece(1, test.player)).to eql(1)
-            expect(test.place_piece(1, test.player)).to eql(0)
+
+        it "places a new piece where it should go" do
+            expect(@board.place_piece(0, "piece")).to eql("piece")
         end
 
-        it "returns nil when a column is full" do
-            test = Board.new
-            expect(test.place_piece(1, test.player)).to eql(5)
-            expect(test.place_piece(1, test.player)).to eql(4)
-            expect(test.place_piece(1, test.player)).to eql(3)
-            expect(test.place_piece(1, test.player)).to eql(2)
-            expect(test.place_piece(1, test.player)).to eql(1)
-            expect(test.place_piece(1, test.player)).to eql(0)
-            expect(test.place_piece(1, test.player)).to eql(nil)
+        it "returns nil when you attempt to add a piece in a full column" do
+            6.times { @board.place_piece(0, "piece") }
+            expect(@board.place_piece(0, "piece")).to eql(nil)
         end
+
+        it "ignores an invalid entry" do
+            expect(@board.place_piece("A", "piece")).to eql(nil)
+        end
+
     end
 
-    describe "#computer_move" do
-        it "makes a move for the computer" do
-            test = Board.new
-            expect(test.computer_move).to be_between(0, 6)
+    describe "#linear_check" do
+
+        it "identifies when a winning move has occurred vertically" do
+            4.times { @board.place_piece(0, "X") }
+            expect(@board.linear_check(@board.columns)).to eql(true)
         end
+
+        it "identifies when a winning move has occurred horizontally" do
+            0.upto(3) { |num| @board.place_piece(num, "X") }
+            expect(@board.linear_check(@board.rows)).to eql(true)
+        end
+
+        it "recognizes that four consecutive nil does not count as a win" do
+            expect(@board.linear_check(@board.rows)).to eql(false)
+        end
+
     end
 
-    describe "#human_move" do
-        it "makes a move for the player" do
-            test = Board.new
-            expect(test.human_move).to be_between(0, 6)
+    describe "#move_list" do
+
+        it "updates a player's list of moves" do
+            @board.place_piece(0, "X")
+            expect(@board.moves["X"]).to eql([[5], [0]])
         end
+
+    end
+
+    describe "#diagonal_check" do
+
+        it "identifies when a winning move has occurred diagonally" do
+            0.upto(3) do |num|
+                num.times { @board.place_piece(num, "O") }
+                @board.place_piece(num, "X")
+            end
+            expect(@board.diagonal_check).to eql(true)
+        end
+
     end
 
     describe "#full?" do
-        it "identifies when a board is full" do
-            test = Board.new
-            42.times { test.computer_move }
-            expect(test.full?).to eql(true)
+
+        it "returns false when the board is not full" do
+            expect(@board.full?).to eql(false)
         end
 
-        it "identifies when a board is not full" do
-            test = Board.new
-            41.times { test.computer_move }
-            expect(test.full?).to eql(false)
+    end
+
+end
+
+describe Human do
+
+    before do
+        @human = Human.new("X")
+    end
+
+    describe "#select_move" do
+
+        it "returns an integer" do
+            expect(@human.select_move.class).to eql(Integer)
         end
 
-        describe "#winner?" do
-            it "identifies when someone has won column-wise" do
-                test = Board.new
-                4.times { test.place_piece(0, test.player) }
-                expect(test.winner?).to eql(true)
-            end
-
-            it "identifies when someone has won row-wise" do
-                test = Board.new
-                0.upto(4) { |num| test.place_piece(num, test.player) }
-                expect(test.winner?).to eql(true)
-            end
-
-            it "identifies when someone has won diagonally" do
-                test = Board.new
-                test.place_piece(0, test.player)
-                test.place_piece(1, test.computer)
-                test.place_piece(1, test.player)
-                2.times { test.place_piece(2, test.computer) }
-                test.place_piece(2, test.player)
-                3.times { test.place_piece(3, test.computer) }
-                test.place_piece(3, test.player)
-                expect(test.winner?).to eql(true)
-            end
-
+        it "returns an integer between 0 and 6" do
+            expect(@human.select_move).to be_between(0, 6)
         end
+
+    end
+
+end
+
+describe Computer do
+
+    before do
+        @computer = Computer.new("O")
+    end
+
+    describe "#select_move" do
+
+        it "returns an integer between 0 and 6" do
+            expect(@computer.select_move).to be_between(0, 6)
+        end
+
     end
 
 end
 
 describe Game do
 
-    it "assigns Board to the right variable" do
-        test = Game.new
-        expect(test.board.class).to eql(Board)
+    before do
+        @game = Game.new
+    end
+
+    describe "#check_winner" do
+
+        it "returns false if there is no winner" do
+            expect(@game.check_winner).to eql(false)
+        end
+
+        it "returns true if there is a winner" do
+            4.times { @game.board.place_piece(0, "X") }
+            expect(@game.check_winner).to eql(true)
+        end
+
+    end
+
+    describe "#player_turn" do
+
+        it "always eventually returns a valid move" do
+            expect(@game.player_turn).to be_between(0, 6)
+        end
+
+    end
+
+    describe "#computer_turn" do
+
+        it "always eventually returns a valid move" do
+            expect(@game.computer_turn).to be_between(0, 6)
+        end
+
     end
 
 end

@@ -1,123 +1,69 @@
-class Board 
+class Board
 
-    attr_accessor :columns, :player, :computer, :rows
+    attr_accessor :columns, :rows, :moves
 
     def initialize
         @columns = {}
         @rows = {}
-        @player = "X"
-        @computer = "O"
+        @moves = {}
+        (0..6).to_a.each { |value| @columns[value] = Array.new(6, nil) }
+        (0..5).to_a.each { |value| @rows[value] = Array.new(7, nil) }
+    end
 
-        (0..6).to_a.each do |column|
-            @columns[column] = Array.new(6, nil)
-        end
-
-        (0..5).to_a.each do |row|
-            @rows[row] = Array.new(5, nil)
-        end
-
+    def available_spot(entry)
+        return if !(0..6).to_a.include?(entry)
+        @columns[entry].rindex(nil)
     end
 
     def place_piece(column, symbol)
-        return if !column || !(0..6).to_a.include?(column)
-        avail_spot = nil
-        #identifies whether the column is full
-        full = @columns[column][0]
-        #finds the last non-nil row in the chosen column (array), then adds the player's piece on top of it
-        @columns[column].each_with_index do |row, index|
-            break if avail_spot || full
-            if row
-                avail_spot = (index - 1)
-            elsif index == @columns[column].length - 1
-                avail_spot = index
-            end
-        end
-
-        if avail_spot
-            @columns[column][avail_spot] = symbol
-            @rows[avail_spot][column] = symbol
-            #returns the column index at which the new piece has been added
-            @columns[column].index(symbol)            
-        end
-
+        spot = available_spot(column)
+        return if !spot
+        move_list(spot, column, symbol)
+        @columns[column][spot] = symbol
+        @rows[spot][column] = symbol
     end
 
-    def computer_move
-        column = nil
-        until place_piece(column, @computer)
-            column = rand(0..6)
-        end
-        column
+    def move_list(row, column, symbol)
+        @moves[symbol] = [[], []] if !moves[symbol]
+        @moves[symbol][0] << row
+        @moves[symbol][1] << column
     end
 
-    def human_move
-        p "Choose a column (0-6)."
-        column = gets.chomp
-        until column.match?(/^[0-9]/) && place_piece(column.to_i, @player)
-            p "Please enter a number between 0 and 6 to represent a column that is not full."
-            column = gets.chomp
-        end
-        column.to_i
+    def linear_check(hash)
+        #checks to see if any consecutive four moves in a column or row are a single player's
+        hash.values.any? { |arr| arr.each_cons(4).any? { |four| four.none? { |value| !value } && four.uniq.size == 1 } }
     end
 
-    def full?
-        moves = []
-        @columns.each do |key, column|
-            column.each do |cell|
-                moves << cell
-            end
+    def diagonal_check
+        result = []
+        comparison = []
+        #for each player...
+        @moves.each do |player, dimension|
+            break if dimension.all? { |arr| arr.length < 4 }
+            #evaluate the moves in the dimension (row/column, depending on which loop) to see if there is a set of four consecutive moves...
+            dimension.each { |arr| arr.each_cons(4) { |four| comparison << four } }
+            #that are numerically consecutive within the dimension as well – add that boolean to the result array
+            result << comparison.any? { |arr| arr.each_cons(2).all? { |first, second| second == first + 1 || second == first - 1 } }
+            #reset comparison array to prepare for testing the next player if needed
+            comparison = []
         end
-        moves.all? { |value| value }
+        #if both of the booleans in the results array are true, that means there is a column + row pair with four consecutive values each (diagonal win)
+        !result.empty? && result.all? { |boolean| boolean }
     end
 
     def display
-        @rows.values.each do |row|
-            p row
-        end
+        @rows.values.each { |row| p row }
     end
 
-    def collect_moves(symbol)
-        coordinates = []
-        @rows.each do |key, value|
-            value.each_with_index do |piece, index|
-                coordinates << [key, index] if piece == symbol
-            end
-        end
-        coordinates
-    end
-
-    def analyze_moves(moves)
-        rows = []
-        cols = []
-        result = false
-
-        def all_equal?(arr)
-            arr.uniq.length == 1
-        end
-
-        def four_apart?(arr)
-            (arr[3] - arr[0]).abs == 3
-        end
-
-        moves.each do |coordinates|
-            rows << coordinates[0]
-            cols << coordinates[1]
-        end
-
-        if all_equal?(rows) || all_equal?(cols)
-            result = true if four_apart?(rows) || four_apart?(cols)
-        elsif four_apart?(rows) && four_apart?(cols)
-            result = true
-        end
-
-        result
-
-    end
-
-    def winner?
-        result = analyze_moves(collect_moves(@player)) || analyze_moves(collect_moves(@computer)) ? true : false
+    def full?
+        @rows.values.all? { |row| row.all? { |boolean| boolean } }
     end
 
 end
 
-test = Board.new
+# test = Board.new
+# 0.upto(3) do |num|
+#     num.times { test.place_piece(num, "O") }
+#     test.place_piece(num, "X")
+# end
+# p test.diagonal_check
